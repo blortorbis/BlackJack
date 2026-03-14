@@ -9,6 +9,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.BufferedReader;
 
 class Card {
     String suit;
@@ -101,12 +105,14 @@ public class BlackjackGUI extends JFrame {
     private JLabel balanceLabel, betLabel;
     private JButton bet10Button, bet50Button, bet100Button, splitButton, doubleDownButton;
     private int playerBalance = 1000;
+    private static final String BALANCE_FILE = "balance.txt";
     private int currentBet = 0;
     private boolean bettingOpen = true;
     private static final int CARD_WIDTH = 100;
     private static final int CARD_HEIGHT = 150;
 
     public BlackjackGUI() {
+        loadBalance();
         setTitle("Blackjack");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(800, 600);
@@ -126,7 +132,9 @@ public class BlackjackGUI extends JFrame {
 
         // Status and balance
         JPanel topPanel = new JPanel(new GridLayout(2, 1));
-        statusLabel = new JLabel();
+        statusLabel = new JLabel("", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 28));
+        statusLabel.setForeground(new Color(255, 215, 0)); // Gold color for visibility
         balanceLabel = new JLabel();
         betLabel = new JLabel();
         topPanel.add(statusLabel);
@@ -179,6 +187,7 @@ public class BlackjackGUI extends JFrame {
         playerHand = new Hand();
         dealerHand = new Hand();
         statusLabel.setText("");
+        // Do NOT reset playerBalance here, so winnings persist
         currentBet = 0;
         bettingOpen = true;
         updateBalanceLabel();
@@ -214,6 +223,26 @@ public class BlackjackGUI extends JFrame {
 
     private void updateBalanceLabel() {
         balanceLabel.setText("Balance: $" + playerBalance);
+        saveBalance();
+    }
+
+    private void saveBalance() {
+        try (PrintWriter out = new PrintWriter(new FileWriter(BALANCE_FILE))) {
+            out.println(playerBalance);
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    private void loadBalance() {
+        try (BufferedReader in = new BufferedReader(new FileReader(BALANCE_FILE))) {
+            String line = in.readLine();
+            if (line != null) {
+                playerBalance = Integer.parseInt(line.trim());
+            }
+        } catch (Exception e) {
+            playerBalance = 1000; // default if file missing or error
+        }
     }
 
     private void updateBetLabel() {
